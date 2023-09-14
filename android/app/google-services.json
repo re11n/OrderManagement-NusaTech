@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "635771301354",
+    "project_id": "ordermanagement-nusatech",
+    "storage_bucket": "ordermanagement-nusatech.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635771301354:android:689857b68402069817d693",
+        "android_client_info": {
+          "package_name": "com.example.ordermanagement_nusatech"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcDXuAHjF7MWurT75mZNdlrtkidtsduVY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
