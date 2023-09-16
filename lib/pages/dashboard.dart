@@ -69,20 +69,32 @@ class _dashboardState extends State<dashboard> {
   void form(String role) {
     switch (role) {
       case 'planner':
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => Planner_form()));
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return Planner_form();
+            });
         break;
       case 'warehouse':
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => Warehouse_form()));
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return Warehouse_form();
+            });
         break;
       case 'grupleader':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => GrupLeader_form()));
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return GrupLeader_form();
+            });
         break;
       case 'purchasing':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => Purchasing_form()));
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return Purchasing_form();
+            });
         break;
       default:
     }
