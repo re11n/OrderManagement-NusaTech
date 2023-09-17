@@ -1,14 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 
 class Warehouse_form extends StatefulWidget {
   final String noWare;
   final String noUnit;
+  final String stokCode;
+  final String quantity;
 
-  const Warehouse_form({super.key, required this.noWare, required this.noUnit});
+  const Warehouse_form(
+      {super.key,
+      required this.noWare,
+      required this.noUnit,
+      required this.stokCode,
+      required this.quantity});
 
   @override
   State<Warehouse_form> createState() => _Warehouse_formState();
@@ -19,6 +24,14 @@ class _Warehouse_formState extends State<Warehouse_form> {
   bool isUploading = false;
   TextEditingController stockCode = TextEditingController();
   TextEditingController quantity = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    stockCode.text = widget.stokCode;
+    quantity.text = widget.quantity;
+  }
 
   void _showSuccessDialog(BuildContext context) {
     setState(() {
@@ -35,6 +48,7 @@ class _Warehouse_formState extends State<Warehouse_form> {
             TextButton(
               child: Text('Tutup'),
               onPressed: () {
+                Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
             ),

@@ -112,15 +112,14 @@ class _Planner_formState extends State<Planner_form> {
     );
   }
 
-  void upload(String noUnit, String noWare) async {
+  void upload(String noUnit, String noWare, DateTime tanggalReady) async {
     if (filePath != null) {
       try {
         setState(() {
           isUploading = true;
         });
-        Reference storageReference = FirebaseStorage.instance
-            .ref()
-            .child('items/${DateTime.now().millisecondsSinceEpoch}');
+        Reference storageReference = FirebaseStorage.instance.ref().child(
+            'items/${DateTime.now().millisecondsSinceEpoch}-${path.basename(filePath!)}');
 
         UploadTask uploadTask = storageReference.putFile(File(filePath!));
         TaskSnapshot snapshot = await uploadTask;
@@ -134,10 +133,16 @@ class _Planner_formState extends State<Planner_form> {
             'documentURL': downloadURL,
             'timestamp':
                 DateFormat('yyyy/MM/dd').format(DateTime.now().toUtc()),
-            'estimasi': '-',
-            'status': '-',
-            'stockCode': '-',
-            'quantity': '-',
+            'estimasi': '',
+            'status': '',
+            'stockCode': '',
+            'quantity': '',
+            'tanggalReady':
+                DateFormat('yyyy/MM/dd').format(tanggalReady).toString(),
+            'dataBarang': '',
+            'fotoSerahURL': '',
+            'fotoSebelumURL': '',
+            'fotoSesudahURL': '',
           });
 
           setState(() {
@@ -251,7 +256,11 @@ class _Planner_formState extends State<Planner_form> {
                       );
                     },
                   );
-                  upload(noUnit.text, noWarehouse.text);
+                  upload(
+                    noUnit.text,
+                    noWarehouse.text,
+                    _selectedDate,
+                  );
                 } else {
                   _showErrorDialog(context, validationMessage!);
                 }
