@@ -6,6 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:intl/intl.dart';
+import 'package:ordermanagement_nusatech/pages/dashboard.dart';
 import 'package:path/path.dart' as path;
 
 class Planner_form extends StatefulWidget {
@@ -26,10 +28,12 @@ class _Planner_formState extends State<Planner_form> {
   TextEditingController noWarehouse = TextEditingController();
   TextEditingController noUnit = TextEditingController();
 
+  bool isUploading = false;
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
+      initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
@@ -84,6 +88,11 @@ class _Planner_formState extends State<Planner_form> {
   }
 
   void _showSuccessDialog(BuildContext context) {
+    setState(() {
+      isUploading = false;
+    });
+    Navigator.of(context).pop();
+    Navigator.of(context).pop();
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -94,7 +103,7 @@ class _Planner_formState extends State<Planner_form> {
             TextButton(
               child: Text('Tutup'),
               onPressed: () {
-                Navigator.of(context).pop(); // Tutup dialog.
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -106,6 +115,9 @@ class _Planner_formState extends State<Planner_form> {
   void upload(String noUnit, String noWare) async {
     if (filePath != null) {
       try {
+        setState(() {
+          isUploading = true;
+        });
         Reference storageReference = FirebaseStorage.instance
             .ref()
             .child('items/${DateTime.now().millisecondsSinceEpoch}');
@@ -120,7 +132,12 @@ class _Planner_formState extends State<Planner_form> {
             'noWarehouse': noWare,
             'noUnit': noUnit,
             'documentURL': downloadURL,
-            'timestamp': FieldValue.serverTimestamp(),
+            'timestamp':
+                DateFormat('yyyy/MM/dd').format(DateTime.now().toUtc()),
+            'estimasi': '-',
+            'status': '-',
+            'stockCode': '-',
+            'quantity': '-',
           });
 
           setState(() {
@@ -135,6 +152,9 @@ class _Planner_formState extends State<Planner_form> {
           ));
         }
       } catch (e) {
+        setState(() {
+          isUploading = false;
+        });
         print('Error: $e');
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Terjadi kesalahan saat mengunggah dokumen.'),
@@ -220,6 +240,17 @@ class _Planner_formState extends State<Planner_form> {
                 if (filePath == null) {
                   _showErrorDialog(context, 'Mohon unggah dokumen');
                 } else if (_validateDate(_selectedDate) == null) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Uploading...'),
+                        content: isUploading
+                            ? CircularProgressIndicator()
+                            : Text('Upload completed.'),
+                      );
+                    },
+                  );
                   upload(noUnit.text, noWarehouse.text);
                 } else {
                   _showErrorDialog(context, validationMessage!);

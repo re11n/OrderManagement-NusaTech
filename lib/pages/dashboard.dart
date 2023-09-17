@@ -29,31 +29,28 @@ class _dashboardState extends State<dashboard> {
           .where('email', isEqualTo: '${currentUser?.email}')
           .get();
       if (querySnapshot.docs.isNotEmpty) {
-        // Mengambil dokumen pertama yang cocok dengan kriteria
         return querySnapshot.docs.first;
       } else {
-        // Data tidak ditemukan
         return null;
       }
     } catch (e) {
-      // Penanganan kesalahan jika terjadi masalah dalam pengambilan data.
       return null;
     }
   }
 
-  String myValue = "";
+  String roleValue = "";
 
   Future<void> fetchData() async {
     try {
       DocumentSnapshot<Object?>? documentSnapshot =
           await getDocumentFromFirestore();
       if (documentSnapshot != null && documentSnapshot.exists) {
-        myValue = documentSnapshot['role'] as String;
+        roleValue = documentSnapshot['role'] as String;
       } else {
-        myValue = 'Data tidak ditemukan';
+        roleValue = 'Data tidak ditemukan';
       }
     } catch (e) {
-      myValue = 'Terjadi kesalahan: $e';
+      roleValue = 'Terjadi kesalahan: $e';
     }
   }
 
@@ -75,25 +72,35 @@ class _dashboardState extends State<dashboard> {
               return Planner_form();
             });
         break;
+      default:
+    }
+  }
+
+  void editForm(
+    String role,
+    String noWare,
+    String noUnit,
+    String stockCode,
+  ) {
+    switch (role) {
       case 'warehouse':
         showDialog(
             context: context,
             builder: (BuildContext context) {
-              return Warehouse_form();
-            });
-        break;
-      case 'grupleader':
-        showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return GrupLeader_form();
+              return Warehouse_form(
+                noUnit: noUnit,
+                noWare: noWare,
+              );
             });
         break;
       case 'purchasing':
         showDialog(
             context: context,
             builder: (BuildContext context) {
-              return Purchasing_form();
+              return Warehouse_form(
+                noUnit: noUnit,
+                noWare: noWare,
+              );
             });
         break;
       default:
@@ -106,40 +113,41 @@ class _dashboardState extends State<dashboard> {
       home: Scaffold(
         appBar: AppBar(
           backgroundColor: const Color.fromRGBO(63, 81, 181, 1),
-          title: Center(child: Text('Dashboard')),
+          title: const Center(child: Text('Dashboard')),
           actions: [
             IconButton(onPressed: signUserOut, icon: const Icon(Icons.logout)),
           ],
         ),
         body: Column(
           children: [
-            Row(
-              children: const [
-                Text(
-                  'Dashboard',
-                  style: TextStyle(fontSize: 25.0),
-                ),
-                Text(
-                  ' Page',
-                  style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold),
-                )
-              ],
-            ),
             FutureBuilder<void>(
               future: fetchData(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return const CircularProgressIndicator();
                 } else if (snapshot.hasError) {
                   return Text('Terjadi kesalahan: ${snapshot.error}');
                 } else {
                   return Column(
                     children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Dashboard',
+                            style: TextStyle(fontSize: 25.0),
+                          ),
+                          Text(
+                            ' $roleValue',
+                            style: TextStyle(
+                                fontSize: 25.0, fontWeight: FontWeight.bold),
+                          )
+                        ],
+                      ),
                       Padding(
                           padding: const EdgeInsets.only(top: 30),
                           child: GestureDetector(
                             onTap: () {
-                              form(myValue);
+                              form(roleValue);
                             },
                             child: Container(
                               padding: const EdgeInsets.all(15),
@@ -151,7 +159,7 @@ class _dashboardState extends State<dashboard> {
                               ),
                               child: Center(
                                   child: Text(
-                                getTextBasedOnCondition(myValue),
+                                getTextBasedOnCondition(roleValue),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -163,6 +171,54 @@ class _dashboardState extends State<dashboard> {
                     ],
                   );
                 }
+              },
+            ),
+            const SizedBox(
+              height: 30,
+            ),
+            StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance.collection('items').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return CircularProgressIndicator();
+                }
+
+                List<DocumentSnapshot> documents = snapshot.data?.docs ?? [];
+
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    headingRowColor:
+                        MaterialStateColor.resolveWith((states) => Colors.teal),
+                    columns: const [
+                      DataColumn(label: Text('Tanggal Pemesanan')),
+                      DataColumn(label: Text('No Warehouse')),
+                      DataColumn(label: Text('No Unit')),
+                      DataColumn(label: Text('Estimasi Sampai')),
+                      DataColumn(label: Text('Edit')),
+                      DataColumn(label: Text('Status')),
+                    ],
+                    rows: documents.map((document) {
+                      var data = document.data() as Map<String, dynamic>;
+
+                      return DataRow(cells: [
+                        DataCell(Text(data['timestamp'].toString())),
+                        DataCell(Text(data['noWarehouse'].toString())),
+                        DataCell(Text(data['noUnit'].toString())),
+                        DataCell(Text(data['estimasi'].toString())),
+                        DataCell(InkWell(
+                          onTap: () {
+                            editForm(roleValue, data['noWarehouse'],
+                                data['noUnit'], data['stockCode']);
+                          },
+                          child: Icon(Icons.edit),
+                        )),
+                        DataCell(Text(data['status'].toString())),
+                      ]);
+                    }).toList(),
+                  ),
+                );
               },
             ),
           ],
