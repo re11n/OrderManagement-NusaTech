@@ -113,6 +113,12 @@ class _Purchasing_formState extends State<Purchasing_form> {
                     labelText: 'Data Barang',
                   ),
                   controller: databarang,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Form tidak boleh kosong';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(
                   height: 15,
@@ -172,6 +178,12 @@ class _Purchasing_formState extends State<Purchasing_form> {
                     labelText: 'Estimasi Datang',
                   ),
                   controller: estimasi,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Form tidak boleh kosong';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(
                   height: 15,
@@ -182,24 +194,26 @@ class _Purchasing_formState extends State<Purchasing_form> {
       actions: [
         ElevatedButton(
             onPressed: () async {
-              String nowarehouse = widget.noWarehouse;
-              Map<String, dynamic> fieldsToUpdate = {
-                'dataBarang': databarang.text,
-                'estimasi': estimasi.text,
-                'status': _status,
-              };
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Uploading...'),
-                    content: isUploading
-                        ? const CircularProgressIndicator()
-                        : const Text('Upload completed.'),
-                  );
-                },
-              );
-              await updateDocumentFields(nowarehouse, fieldsToUpdate);
+              if (_formKey.currentState!.validate()) {
+                String nowarehouse = widget.noWarehouse;
+                Map<String, dynamic> fieldsToUpdate = {
+                  'dataBarang': databarang.text,
+                  'estimasi': estimasi.text,
+                  'status': _status,
+                };
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Uploading...'),
+                      content: isUploading
+                          ? const CircularProgressIndicator()
+                          : const Text('Upload completed.'),
+                    );
+                  },
+                );
+                await updateDocumentFields(nowarehouse, fieldsToUpdate);
+              }
             },
             child: const Text('Upload'))
       ],

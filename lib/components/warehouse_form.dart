@@ -97,7 +97,7 @@ class _Warehouse_formState extends State<Warehouse_form> {
   Widget build(BuildContext context) {
     return AlertDialog(
       scrollable: true,
-      title: Text('Purchasing page'),
+      title: Text('Warehouse page'),
       content: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Form(
@@ -129,6 +129,12 @@ class _Warehouse_formState extends State<Warehouse_form> {
                     labelText: 'Stock Code',
                   ),
                   controller: stockCode,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Form tidak boleh kosong';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(
                   height: 15,
@@ -138,6 +144,12 @@ class _Warehouse_formState extends State<Warehouse_form> {
                     labelText: 'Quantity',
                   ),
                   controller: quantity,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Form tidak boleh kosong';
+                    }
+                    return null;
+                  },
                 ),
                 SizedBox(
                   height: 15,
@@ -148,23 +160,25 @@ class _Warehouse_formState extends State<Warehouse_form> {
       actions: [
         ElevatedButton(
             onPressed: () async {
-              String nowarehouse = widget.noWare;
-              Map<String, dynamic> fieldsToUpdate = {
-                'stockCode': stockCode.text,
-                'quantity': quantity.text,
-              };
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text('Uploading...'),
-                    content: isUploading
-                        ? CircularProgressIndicator()
-                        : Text('Upload completed.'),
-                  );
-                },
-              );
-              await updateDocumentFields(nowarehouse, fieldsToUpdate);
+              if (_formKey.currentState!.validate()) {
+                String nowarehouse = widget.noWare;
+                Map<String, dynamic> fieldsToUpdate = {
+                  'stockCode': stockCode.text,
+                  'quantity': quantity.text,
+                };
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Uploading...'),
+                      content: isUploading
+                          ? CircularProgressIndicator()
+                          : Text('Upload completed.'),
+                    );
+                  },
+                );
+                await updateDocumentFields(nowarehouse, fieldsToUpdate);
+              }
             },
             child: Text('Upload'))
       ],

@@ -33,7 +33,7 @@ class _GrupLeader_formState extends State<GrupLeader_form> {
   String? fotoSesudahURL;
 
   int uploadedImageCount = 0;
-  int totalImages = 3; // Jumlah total gambar yang harus diunggah
+  int totalImages = 3;
 
   final picker = ImagePicker();
 
@@ -44,7 +44,7 @@ class _GrupLeader_formState extends State<GrupLeader_form> {
     setState(() {
       if (pickedFile != null) {
         setImage(File(pickedFile.path));
-        setURL(""); // Inisialisasi dengan string kosong
+        setURL("");
       } else {
         print('No image selected.');
       }
@@ -191,7 +191,6 @@ class _GrupLeader_formState extends State<GrupLeader_form> {
                     (fotoSerah != null ||
                         fotoSebelum != null ||
                         fotoSetelah != null)) {
-                  // Start the loading indicator when the upload process begins
                   final progress = ProgressHUD.of(context);
                   progress?.show();
 
@@ -204,7 +203,6 @@ class _GrupLeader_formState extends State<GrupLeader_form> {
                   await uploadImageAndGetUrl(
                       fotoSetelah, (url) => fotoSesudahURL = url);
 
-                  // Hide the loading indicator when the upload is complete
                   progress?.dismiss();
                   Navigator.of(context).pop();
                 }
