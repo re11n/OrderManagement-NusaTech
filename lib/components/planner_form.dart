@@ -1,5 +1,5 @@
 // ignore_for_file: avoid_print
-
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
@@ -21,12 +21,15 @@ class _Planner_formState extends State<Planner_form> {
   final _formKey = GlobalKey<FormState>();
 
   DateTime _selectedDate = DateTime.now();
+  DateTime _eksekusi1 = DateTime.now(); // New date field 2
+  DateTime _eksekusi2 = DateTime.now(); // New date field 3
   final DateTime _maxDate = DateTime(2099, 12, 31);
 
   String _name = '';
 
   TextEditingController noWarehouse = TextEditingController();
   TextEditingController noUnit = TextEditingController();
+  TextEditingController reqQuantity = TextEditingController();
 
   bool isUploading = false;
 
@@ -41,6 +44,36 @@ class _Planner_formState extends State<Planner_form> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selecteksekusi1(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _eksekusi1,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (picked != null && picked != _eksekusi1) {
+      setState(() {
+        _eksekusi1 = picked;
+      });
+    }
+  }
+
+  Future<void> _selecteksekusi2(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _eksekusi2,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (picked != null && picked != _eksekusi2) {
+      setState(() {
+        _eksekusi2 = picked;
       });
     }
   }
@@ -112,59 +145,54 @@ class _Planner_formState extends State<Planner_form> {
     );
   }
 
-  void upload(String noUnit, String noWare, DateTime tanggalReady) async {
-    if (filePath != null) {
-      try {
-        setState(() {
-          isUploading = true;
-        });
-        Reference storageReference = FirebaseStorage.instance.ref().child(
-            'items/${DateTime.now().millisecondsSinceEpoch}-${path.basename(filePath!)}');
+  Future<bool> isNoWarehouseUnique(String noWarehouse) async {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('items')
+        .where('noWarehouse', isEqualTo: noWarehouse)
+        .get();
 
-        UploadTask uploadTask = storageReference.putFile(File(filePath!));
-        TaskSnapshot snapshot = await uploadTask;
+    return querySnapshot.docs.isEmpty;
+  }
 
-        if (snapshot.state == TaskState.success) {
-          String downloadURL = await storageReference.getDownloadURL();
+  void upload(String noUnit, String noWare, DateTime tanggalReady,
+      DateTime eksekusi1, DateTime eksekusi2, String requantity) async {
+    try {
+      setState(() {
+        isUploading = true;
+      });
 
-          await FirebaseFirestore.instance.collection('items').add({
-            'noWarehouse': noWare,
-            'noUnit': noUnit,
-            'documentURL': downloadURL,
-            'timestamp':
-                DateFormat('yyyy/MM/dd').format(DateTime.now().toUtc()),
-            'estimasi': '',
-            'status': '',
-            'stockCode': '',
-            'quantity': '',
-            'tanggalReady':
-                DateFormat('yyyy/MM/dd').format(tanggalReady).toString(),
-            'dataBarang': '',
-            'fotoSerahURL': '',
-            'fotoSebelumURL': '',
-            'fotoSesudahURL': '',
-          });
+      await FirebaseFirestore.instance.collection('items').add({
+        'noWarehouse': noWare,
+        'noUnit': noUnit,
+        'timestamp': DateFormat('yyyy/MM/dd').format(DateTime.now().toUtc()),
+        'estimasi': '',
+        'status': 'Not Ready',
+        'stockCode': '',
+        'quantity': '0',
+        'tanggalReady':
+            DateFormat('yyyy/MM/dd').format(tanggalReady).toString(),
+        'eksekusi1': DateFormat('yyyy/MM/dd').format(eksekusi1).toString(),
+        'eksekusi2': DateFormat('yyyy/MM/dd').format(eksekusi2).toString(),
+        'dataBarang': '',
+        'fotoSerahURL': '',
+        'fotoSebelumURL': '',
+        'fotoSesudahURL': '',
+        'reqQuantity': requantity,
+      });
 
-          setState(() {
-            filePath = null;
-          });
-          // ignore: use_build_context_synchronously
-          _showSuccessDialog(context);
-        } else {
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Gagal mengunggah dokumen.'),
-          ));
-        }
-      } catch (e) {
-        setState(() {
-          isUploading = false;
-        });
-        print('Error: $e');
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Terjadi kesalahan saat mengunggah dokumen.'),
-        ));
-      }
+      setState(() {
+        filePath = null;
+      });
+
+      _showSuccessDialog(context);
+    } catch (e) {
+      setState(() {
+        isUploading = false;
+      });
+      print('Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Terjadi kesalahan saat mengunggah dokumen.'),
+      ));
     }
   }
 
@@ -176,75 +204,121 @@ class _Planner_formState extends State<Planner_form> {
       content: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: noWarehouse,
-                  decoration: const InputDecoration(
-                    labelText: 'No Warehouse Requested',
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: noWarehouse,
+                decoration: const InputDecoration(
+                  labelText: 'No Warehouse Requested',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Form tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(
+                height: 15,
+              ),
+              TextFormField(
+                controller: noUnit,
+                decoration: const InputDecoration(
+                  labelText: 'No Unit',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Form tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: reqQuantity,
+                decoration: const InputDecoration(
+                  labelText: 'Request Quantity',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Form tidak boleh kosong';
+                  }
+                  return null;
+                },
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(
+                height: 15,
+              ),
+              TextFormField(
+                readOnly: true,
+                controller: TextEditingController(
+                  text: "${_selectedDate.toLocal()}".split(' ')[0],
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Target Ready Sparepart',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () {
+                      _selectDate(context);
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Form tidak boleh kosong';
-                    }
-                    return null;
-                  },
                 ),
-                const SizedBox(
-                  height: 15,
+              ),
+              const SizedBox(
+                height: 15,
+              ),
+              TextFormField(
+                readOnly: true,
+                controller: TextEditingController(
+                  text: "${_eksekusi1.toLocal()}".split(' ')[0],
                 ),
-                TextFormField(
-                  controller: noUnit,
-                  decoration: const InputDecoration(
-                    labelText: 'No Unit',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Form tidak boleh kosong';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(
-                  height: 15,
-                ),
-                TextFormField(
-                  readOnly: true,
-                  controller: TextEditingController(
-                    text: "${_selectedDate.toLocal()}".split(' ')[0],
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Target Ready Sparepart',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      onPressed: () {
-                        _selectDate(context);
-                      },
-                    ),
+                decoration: InputDecoration(
+                  labelText: 'Tanggal Eksekusi 1',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () {
+                      _selecteksekusi1(context);
+                    },
                   ),
                 ),
-                const SizedBox(
-                  height: 25,
+              ),
+              const SizedBox(
+                height: 15,
+              ),
+              TextFormField(
+                readOnly: true,
+                controller: TextEditingController(
+                  text: "${_eksekusi2.toLocal()}".split(' ')[0],
                 ),
-                filePath != null
-                    ? Text('Selected Document:\n${path.basename(filePath!)}')
-                    : const Text('Upload Document'),
-                ElevatedButton(
-                  onPressed: _pickDocument,
-                  child: const Text('Browse'),
+                decoration: InputDecoration(
+                  labelText: 'Tanggal Eksekusi 2',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () {
+                      _selecteksekusi2(context);
+                    },
+                  ),
                 ),
-              ],
-            )),
+              ),
+              const SizedBox(
+                height: 25,
+              ),
+            ],
+          ),
+        ),
       ),
       actions: [
         ElevatedButton(
-            onPressed: () {
-              final validationMessage = _validateDate(_selectedDate);
-              if (_formKey.currentState!.validate()) {
-                if (filePath == null) {
-                  _showErrorDialog(context, 'Mohon unggah dokumen');
-                } else if (_validateDate(_selectedDate) == null) {
+          onPressed: () async {
+            final validationMessage = _validateDate(_selectedDate);
+            if (_formKey.currentState!.validate()) {
+              if (_validateDate(_selectedDate) == null) {
+                final isUnique = await isNoWarehouseUnique(noWarehouse.text);
+                if (isUnique) {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
@@ -256,17 +330,19 @@ class _Planner_formState extends State<Planner_form> {
                       );
                     },
                   );
-                  upload(
-                    noUnit.text,
-                    noWarehouse.text,
-                    _selectedDate,
-                  );
+                  upload(noUnit.text, noWarehouse.text, _selectedDate,
+                      _eksekusi1, _eksekusi2, reqQuantity.text);
                 } else {
-                  _showErrorDialog(context, validationMessage!);
+                  _showErrorDialog(context,
+                      'No Warehouse sudah ada. Silahkan masukkan No warehouse yang lain');
                 }
+              } else {
+                _showErrorDialog(context, validationMessage!);
               }
-            },
-            child: const Text('Upload'))
+            }
+          },
+          child: const Text('Upload'),
+        )
       ],
     );
   }

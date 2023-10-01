@@ -214,6 +214,11 @@ class _dashboardState extends State<dashboard> {
                         DataColumn(label: Text('Tanggal Pemesanan')),
                         DataColumn(label: Text('No Warehouse')),
                         DataColumn(label: Text('No Unit')),
+                        DataColumn(label: Text('Tanggal Eksekusi 1')),
+                        DataColumn(label: Text('Tanggal Eksekusi 2')),
+                        DataColumn(label: Text('Request Quantity')),
+                        DataColumn(label: Text('Quantity')),
+                        DataColumn(label: Text('Persentase')),
                         DataColumn(label: Text('Estimasi Sampai')),
                         DataColumn(label: Text('Edit')),
                         DataColumn(label: Text('Status')),
@@ -225,6 +230,13 @@ class _dashboardState extends State<dashboard> {
                           DataCell(Text(data['timestamp'].toString())),
                           DataCell(Text(data['noWarehouse'].toString())),
                           DataCell(Text(data['noUnit'].toString())),
+                          DataCell(Text(data['eksekusi1'].toString())),
+                          DataCell(Text(data['eksekusi2'].toString())),
+                          DataCell(Text(data['reqQuantity'].toString())),
+                          DataCell(Text(data['quantity'].toString())),
+                          DataCell(Text((int.parse(data['quantity']) -
+                                  int.parse(data['reqQuantity']))
+                              .toString())),
                           DataCell(Text(data['estimasi'].toString())),
                           DataCell(InkWell(
                             onTap: () {
