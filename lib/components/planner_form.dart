@@ -21,8 +21,8 @@ class _Planner_formState extends State<Planner_form> {
   final _formKey = GlobalKey<FormState>();
 
   DateTime _selectedDate = DateTime.now();
-  DateTime _eksekusi1 = DateTime.now(); // New date field 2
-  DateTime _eksekusi2 = DateTime.now(); // New date field 3
+  DateTime _eksekusi1 = DateTime.now();
+  DateTime _eksekusi2 = DateTime.now();
   final DateTime _maxDate = DateTime(2099, 12, 31);
 
   String _name = '';

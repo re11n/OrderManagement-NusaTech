@@ -2,6 +2,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class Purchasing_form extends StatefulWidget {
   final String noWarehouse;
@@ -28,6 +29,53 @@ class _Purchasing_formState extends State<Purchasing_form> {
   bool isUploading = false;
   TextEditingController databarang = TextEditingController();
   TextEditingController estimasi = TextEditingController();
+  final DateTime _maxDate = DateTime(2099, 12, 31);
+  DateTime _selectedDate = DateTime.now();
+
+  void _showErrorDialog(BuildContext context, String errorMessage) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(errorMessage),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String? _validateDate(DateTime selectedDate) {
+    if (selectedDate == null) {
+      return 'Tanggal harus diisi';
+    }
+    if (selectedDate.isAfter(_maxDate)) {
+      return 'Tanggal tidak boleh melebihi $_maxDate';
+    }
+    return null;
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -174,16 +222,19 @@ class _Purchasing_formState extends State<Purchasing_form> {
                   height: 15,
                 ),
                 TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Estimasi Datang',
+                  readOnly: true,
+                  controller: TextEditingController(
+                    text: "${_selectedDate.toLocal()}".split(' ')[0],
                   ),
-                  controller: estimasi,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Form tidak boleh kosong';
-                    }
-                    return null;
-                  },
+                  decoration: InputDecoration(
+                    labelText: 'Target Ready Sparepart',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.calendar_today),
+                      onPressed: () {
+                        _selectDate(context);
+                      },
+                    ),
+                  ),
                 ),
                 const SizedBox(
                   height: 15,
@@ -194,25 +245,32 @@ class _Purchasing_formState extends State<Purchasing_form> {
       actions: [
         ElevatedButton(
             onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                String nowarehouse = widget.noWarehouse;
-                Map<String, dynamic> fieldsToUpdate = {
-                  'dataBarang': databarang.text,
-                  'estimasi': estimasi.text,
-                  'status': _status,
-                };
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Uploading...'),
-                      content: isUploading
-                          ? const CircularProgressIndicator()
-                          : const Text('Upload completed.'),
-                    );
-                  },
-                );
-                await updateDocumentFields(nowarehouse, fieldsToUpdate);
+              final validationMessage = _validateDate(_selectedDate);
+              if (_validateDate(_selectedDate) == null) {
+                if (_formKey.currentState!.validate()) {
+                  String nowarehouse = widget.noWarehouse;
+                  Map<String, dynamic> fieldsToUpdate = {
+                    'dataBarang': databarang.text,
+                    'estimasi': DateFormat('yyyy/MM/dd')
+                        .format(_selectedDate)
+                        .toString(),
+                    'status': _status,
+                  };
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Uploading...'),
+                        content: isUploading
+                            ? const CircularProgressIndicator()
+                            : const Text('Upload completed.'),
+                      );
+                    },
+                  );
+                  await updateDocumentFields(nowarehouse, fieldsToUpdate);
+                }
+              } else {
+                _showErrorDialog(context, validationMessage!);
               }
             },
             child: const Text('Upload'))
