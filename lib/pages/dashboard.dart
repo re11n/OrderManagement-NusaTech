@@ -63,18 +63,59 @@ class _dashboardState extends State<dashboard> {
     }
   }
 
-  // void form(String role) {
-  //   switch (role) {
-  //     case 'planner':
-  //       showDialog(
-  //           context: context,
-  //           builder: (BuildContext context) {
-  //             return Planner_form();
-  //           });
-  //       break;
-  //     default:
-  //   }
-  // }
+  Future<bool> checkImages(String id) async {
+    try {
+      final documentSnapshot = await FirebaseFirestore.instance
+          .collection('items')
+          .where('noWarehouse', isEqualTo: id)
+          .limit(1)
+          .get();
+      if (documentSnapshot.docs.isNotEmpty) {
+        return true;
+      }
+    } catch (e) {
+      print('Error fetching image URLs: $e');
+    }
+    return false;
+  }
+
+  void showImagesDialog(List<String> imageUrls, List<String> imageTitles) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Expanded(
+                child: ListView.builder(
+                  itemCount: imageUrls.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return Column(
+                      children: [
+                        Text(
+                          imageTitles[index],
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
+                        Image.network(
+                          imageUrls[index],
+                          fit: BoxFit.cover,
+                        ),
+                        Divider(),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   void editForm(String role, String noWare, String noUnit, String stockCode,
       String quantity, String dataBarang, String estimasi) {
@@ -220,6 +261,7 @@ class _dashboardState extends State<dashboard> {
                         DataColumn(label: Text('Quantity')),
                         DataColumn(label: Text('Persentase')),
                         DataColumn(label: Text('Estimasi Sampai')),
+                        DataColumn(label: Text('Images')),
                         DataColumn(label: Text('Edit')),
                         DataColumn(label: Text('Status')),
                       ],
@@ -238,6 +280,34 @@ class _dashboardState extends State<dashboard> {
                                   int.parse(data['reqQuantity']))
                               .toString())),
                           DataCell(Text(data['estimasi'].toString())),
+                          DataCell(
+                            (data['fotoSebelumURL'] != "")
+                                ? ElevatedButton(
+                                    onPressed: () {
+                                      showImagesDialog([
+                                        data['fotoSebelumURL'].toString(),
+                                        data['fotoSesudahURL'].toString(),
+                                        data['fotoSerahURL'].toString(),
+                                      ], [
+                                        'Foto Sebelum Dipasang',
+                                        'Foto Sesudah Dipasang',
+                                        'Foto Serah Terima'
+                                      ]);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10.0),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Lihat Gambar',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  )
+                                : const Text('No Images'),
+                          ),
                           DataCell(InkWell(
                             onTap: () {
                               editForm(

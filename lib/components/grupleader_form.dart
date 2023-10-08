@@ -143,21 +143,21 @@ class _GrupLeader_formState extends State<GrupLeader_form> {
                         ImageSource.gallery,
                         (image) => fotoSerah = image,
                         (url) => fotoSerahURL = url),
-                    child: Text('Select Foto Serah'),
+                    child: Text('Select Foto Serah Terima'),
                   ),
                   ElevatedButton(
                     onPressed: () => _getImage(
                         ImageSource.gallery,
                         (image) => fotoSebelum = image,
                         (url) => fotoSebelumURL = url),
-                    child: Text('Select Foto Sebelum'),
+                    child: Text('Select Foto Sebelum Dipasang'),
                   ),
                   ElevatedButton(
                     onPressed: () => _getImage(
                         ImageSource.gallery,
                         (image) => fotoSetelah = image,
                         (url) => fotoSesudahURL = url),
-                    child: Text('Select Foto Setelah'),
+                    child: Text('Select Foto Setelah Dipasang'),
                   ),
                   const SizedBox(
                     height: 15,
